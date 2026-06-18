@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=375, initial-scale=1.0, user-scalable=no">
+    <title>数聚福州 智启未来</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        body {
+            background: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .phone {
+            width: 375px;
+            height: 667px;
+            border: 6px solid #333;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+        }
+        .page-box {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        /* 通用页面：纵向布局，2-8共用背景 */
+        .page {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-image: url("img/bg_other.jpg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        .page.active {
+            display: flex;
+        }
+        /* 第一幕独立背景 */
+        .page[data-page="1"] {
+            background-image: url("img/bg_first.jpg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        /* 仅第二幕横向布局 */
+        .page[data-page="2"] {
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px;
+        }
+        .page-img {
+            width: 90%;
+            max-height: 380px;
+            border-radius: 8px;
+            margin: 15px 0;
+            object-fit: contain;
+            background: transparent;
+        }
+        /* 第二幕图片交互 */
+        .page[data-page="2"] .img-wrap {
+            width: 45%;
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .page[data-page="2"] .img-wrap .page-img {
+            width: 100%;
+            max-height: unset;
+            margin: 0;
+            transition: all 0.3s ease;
+            filter: brightness(0.9);
+            transform: scale(1);
+        }
+        .page[data-page="2"] .img-wrap:hover .page-img {
+            transform: scale(1.08);
+            filter: brightness(1.2);
+        }
+        .page[data-page="2"] .img-wrap:active .page-img {
+            transform: scale(1.08);
+            filter: brightness(1.2);
+        }
+        .code-line {
+            position: absolute;
+            width: 60px;
+            height: 2px;
+            background: rgba(100, 180, 255, 0.6);
+            animation: lightFlash 2.5s infinite;
+        }
+        .line1 { top: 10%; right: -10px; }
+        .line2 { top: 60%; right: -5px; }
+        .line3 { bottom: 15%; left: 5px; }
+        .page[data-page="2"] .text-box {
+            width: 52%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .page[data-page="2"] .text-box .title {
+            margin: 0;
+            font-size: 20px;
+        }
+        .page[data-page="2"] .text-box .desc {
+            text-align: left;
+            padding: 0;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+        .page[data-page="2"] .tip {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .title {
+            font-size: 22px;
+            color: #1677ff;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .sub-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .desc {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #333;
+            text-align: center;
+            padding: 0 10px;
+        }
+        .click-area {
+            cursor: pointer;
+            padding: 12px 24px;
+            background: #e8f3ff;
+            border-radius: 6px;
+            margin: 15px 0;
+            color: #1677ff;
+        }
+        .hover-item {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 8px;
+        }
+        .hover-item:hover {
+            transform: scale(1.1);
+            color: #1677ff;
+        }
+        .mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 99;
+        }
+        .popup {
+            position: absolute;
+            left: 20px;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #333;
+        }
+        .tip {
+            position: absolute;
+            bottom: 30px;
+            font-size: 12px;
+            color: #999;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes strokeDraw {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes lightFlash {
+            0%,100% { opacity: 0.5; }
+            50% { opacity: 0.9; }
+        }
+        @keyframes breathe {
+            0%,100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+        @keyframes carMove {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(40px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* 顶部装饰图 与标题同步出现 */
+        .page[data-page="3"] .top-deco-img {
+            width: 180px;
+            margin-bottom: 10px;
+            opacity: 0;
+            /* 和标题动画、延时完全一致，同时显现 */
+            animation: fadeIn 3s ease forwards 0s;
+        }
+        
+        /* ========== 第三幕原有样式（已更新好） ========== */
+        .page[data-page="3"] .scene-wrap {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .stage-img {
+            width: 140px;
+            opacity: 0;
+            animation: fadeIn 1.2s ease forwards 0.2s;
+        }
+        .screen-img {
+            width: 220px;
+            cursor: pointer;
+            opacity: 0;
+            animation: fadeIn 1.2s ease forwards 1.4s;
+        }
+        .crowd-group {
+            width: 260px;
+            display: flex;
+            justify-content: space-between;
+            position: absolute;
+            bottom: 30px;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards 2.6s;
+        }
+        .crowd-left-img, .crowd-right-img {
+            width: 80px;
+        }
+        .bubble-group {
+            width: 320px;
+            display: flex;
+            justify-content: space-around;
+            position: absolute;
+            bottom: 140px;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards 3.8s;
+        }
+        .bubble-img {
+            width: 50px;
+        }
+
+        /* 第一幕底部小字高亮恢复 */
+        .page[data-page="1"] .tip {
+            animation: fadeIn 2s ease 2s forwards;
+            opacity: 0;
+            font-size: 14px;
+            color: #fff;
+            text-shadow: 0 1px 5px #003377;
+        }
+        .page[data-page="1"] .title {
+            animation: fadeIn 3s ease forwards;
+            opacity: 0;
+            font-weight: bold;
+            font-size: 26px;
+            color: #004099;
+            text-shadow: 0 1px 4px rgba(255,255,255,0.8);
+        }
+        .page[data-page="1"] .sub-title {
+            animation: fadeIn 3s ease 1s forwards;
+            opacity: 0;
+            font-weight: 500;
+            font-size: 16px;
+            color: #003377;
+            text-shadow: 0 1px 3px rgba(255,255,255,0.7);
+        }
+        .page[data-page="1"] .page-img {
+            animation: strokeDraw 4s ease 0.5s forwards;
+            opacity: 0;
+        }
+
+        /* 第2幕 分层渐入 */
+        .page[data-page="2"] .title {
+            animation: fadeIn 3s ease forwards;
+            opacity: 0;
+        }
+        .page[data-page="2"] .page-img {
+            animation: strokeDraw 3s ease forwards;
+            opacity: 0;
+        }
+        .page[data-page="2"] .desc {
+            animation: fadeIn 3s ease 1s forwards;
+            opacity: 0;
+        }
+        .page[data-page="2"] .hover-item {
+            animation: fadeIn 3s ease 2s forwards, lightFlash 3s infinite 2s;
+            opacity: 0;
+        }
+
+        /* 3-7幕基础入场 */
+        .page[data-page="3"] .title {animation: fadeIn 3s ease forwards;opacity:0;}
+        .page[data-page="4"] .title {animation: slideUp 3s ease forwards;opacity:0;}
+        .page[data-page="4"] .page-img {animation: strokeDraw 4s ease 0.5s forwards;opacity:0;}
+        .page[data-page="5"] .title {animation: fadeIn 3s ease forwards;opacity:0;}
+        .page[data-page="5"] .page-img {animation: strokeDraw 4s ease 0.5s forwards;opacity:0;}
+        .page[data-page="5"] .hover-item {animation: slideUp 2s ease forwards;opacity:0;}
+        .page[data-page="5"] .hover-item:nth-child(1){animation-delay:1s;}
+        .page[data-page="5"] .hover-item:nth-child(2){animation-delay:1.4s;}
+        .page[data-page="5"] .hover-item:nth-child(3){animation-delay:1.8s;}
+        .page[data-page="5"] .hover-item:nth-child(4){animation-delay:2.2s;}
+        .page[data-page="6"] .title {animation: slideUp 3s ease forwards;opacity:0;}
+        .page[data-page="6"] .page-img {animation: strokeDraw 4s ease 0.5s forwards;opacity:0;}
+        .page[data-page="7"] .title {animation: fadeIn 3s ease forwards;opacity:0;}
+        .page[data-page="7"] .page-img {animation: strokeDraw 4s ease 0.5s forwards;opacity:0;}
+        .page[data-page="7"] .desc {animation: slideUp 3s ease 2s forwards;opacity:0;}
+
+        /* 第八幕纯渐入，无漂浮 */
+        .page[data-page="8"] .title {
+            animation: fadeIn 3s ease forwards;
+            opacity: 0;
+        }
+        .page[data-page="8"] .page-img {
+            animation: fadeIn 3s ease forwards;
+            opacity: 0;
+        }
+        .page[data-page="8"] .desc {
+            animation: fadeIn 3s ease 1s forwards;
+            opacity: 0;
+        }
+        .page[data-page="8"] .click-area {
+            animation: fadeIn 3s ease 2s forwards;
+            opacity: 0;
+        }
+
+        /* 2-8文字白阴影 */
+        .page:not([data-page="1"]) .title,
+        .page:not([data-page="1"]) .desc,
+        .page:not([data-page="1"]) .hover-item,
+        .page:not([data-page="1"]) .click-area,
+        .page:not([data-page="1"]) .tip {
+            text-shadow: 0 0 7px rgba(255, 255, 255, 0.9);
+        }
+		
+		/* 第四幕 三张图垂直单列排布 缩小尺寸+同步标题动画 */
+		.page[data-page="4"] .img-col-box {
+		    width: 70%;
+		    margin: 10px auto;
+		    display: flex;
+		    flex-direction: column;
+		    gap: 10px;
+		}
+		.page[data-page="4"] .col-img {
+		    width: 100%;
+		    max-height: 120px;
+		    height: auto;
+		    object-fit: contain;
+		    /* 和标题同时淡入 */
+		    opacity: 0;
+		    animation: fadeIn 1s ease forwards 0s;
+		}
+		
+		/* 第五幕图标布局 */
+		.page[data-page="5"] .icon-wrap {
+		    width: 85%;
+		    margin: 20px auto;
+		    display: flex;
+		    justify-content: space-around;
+		    gap: 10px;
+		}
+		.page[data-page="5"] .hover-item {
+		    width: 22%;
+		    cursor: pointer;
+		}
+		.page[data-page="5"] .hover-item img {
+		    width: 100%;
+		    height: auto;
+		    border-radius: 6px;
+		    transition: transform 0.2s;
+		}
+		.page[data-page="5"] .hover-item img:hover {
+		    transform: scale(1.08);
+		}
+		
+		.page[data-page="5"] .pop-box {
+		    display: none;
+		    width: 78%;
+		    position: absolute;
+		    top: 50%;
+		    left: 50%;
+		    transform: translate(-50%, -50%);
+		    background: #fff;
+		    padding: 20px;
+		    border-radius: 10px;
+		    box-shadow: 0 0 15px #cccccc;
+		    z-index: 99;
+		    text-align: center;
+		}
+		.page[data-page="5"] .pop-box.show {
+		    display: block;
+		}
+		.page[data-page="5"] .pop-img {
+		    width: 100%;
+		    max-height: 170px;
+		    margin-bottom: 14px;
+		}
+		.page[data-page="5"] .pop-text {
+		    line-height: 1.7;
+		    font-size: 14px;
+		    margin: 0 0 16px;
+		}
+		.page[data-page="5"] .close-btn {
+		    display: inline-block;
+		    padding: 6px 20px;
+		    background: #333333;
+		    color: #ffffff;
+		    border-radius: 4px;
+		    cursor: pointer;
+		}
+		
+		.pop-box {
+		    display: none;
+		    width: 78%;
+		    position: absolute;
+		    top: 50%;
+		    left: 50%;
+		    transform: translate(-50%, -50%);
+		    background: #fff;
+		    padding: 20px;
+		    border-radius: 10px;
+		    box-shadow: 0 0 15px #ccc;
+		    z-index: 999;
+		    text-align: center;
+		}
+		.pop-box.show {
+		    display: block;
+		}
+		.pop-img {
+		    width: 100%;
+		    max-height: 170px;
+		    margin-bottom: 14px;
+		}
+		.pop-text {
+		    line-height: 1.7;
+		    font-size: 14px;
+		    margin: 0 0 16px;
+		}
+		.close-btn {
+		    display: inline-block;
+		    padding: 6px 20px;
+		    background: #333;
+		    color: #fff;
+		    border-radius: 4px;
+		    cursor: pointer;
+		}
+		/* 第六幕按钮居中 */
+		.page[data-page="6"] .center-box {
+		    width: 100%;
+		    height: 70vh;
+		    display: flex;
+		    flex-direction: column;
+		    justify-content: center;
+		    align-items: center;
+		    gap: 24px;
+		}
+		.click-area {
+		    width: 220px;
+		    text-align: center;
+		    margin: 0;
+		    padding: 12px;
+		    border: 1px solid #999;
+		    border-radius: 6px;
+		    cursor: pointer;
+		    font-size: 16px;
+		}
+		
+		/* 第六幕按钮垂直水平居中 */
+		.page[data-page="6"] .center-box {
+		    width: 100%;
+		    height: 70vh;
+		    display: flex;
+		    flex-direction: column;
+		    justify-content: center;
+		    align-items: center;
+		    gap: 24px;
+		}
+		.click-area {
+		    width: 220px;
+		    text-align: center;
+		    margin: 0;
+		    padding: 12px;
+		    border: 1px solid #999;
+		    border-radius: 6px;
+		    cursor: pointer;
+		    font-size: 16px;
+		}
+		
+		/* 第七幕页面基础 */
+		.page[data-page="7"] {
+		    position: relative;
+		    width: 100%;
+		    height: 100vh;
+		    overflow: hidden;
+		    background-color: #f6f9fd;
+		}
+		
+		/* 底层容器：背景图+粒子 */
+		.bg-layer {
+		    position: absolute;
+		    top: 0;
+		    left: 0;
+		    width: 100%;
+		    height: 100%;
+		    z-index: 1;
+		}
+		
+		/* 福州地标背景图核心样式 */
+		.bg-img {
+		    width: 100%;
+		    height: 100%;
+		    object-fit: cover;
+		    opacity: 0.3;
+		    position: absolute;
+		    top: 0;
+		    left: 0;
+		}
+		
+		/* 数字粒子容器 */
+		.particle-box {
+		    width: 100%;
+		    height: 100%;
+		    position: absolute;
+		    top: 0;
+		    left: 0;
+		}
+		.dot {
+		    position: absolute;
+		    font-size: 14px;
+		    color: #3a6299;
+		    opacity: 0.45;
+		    animation: float 14s linear infinite;
+		}
+		.dot:nth-child(1) { left: 8%; top: 12%; animation-delay: 0s; }
+		.dot:nth-child(2) { left: 86%; top: 20%; animation-delay: 2s; }
+		.dot:nth-child(3) { left: 15%; top: 72%; animation-delay: 4s; }
+		.dot:nth-child(4) { left: 82%; top: 68%; animation-delay: 6s; }
+		.dot:nth-child(5) { left: 42%; top: 8%; animation-delay: 8s; }
+		.dot:nth-child(6) { left: 56%; top: 84%; animation-delay: 10s; }
+		.dot:nth-child(7) { left: 5%; top: 46%; animation-delay: 12s; }
+		.dot:nth-child(8) { left: 90%; top: 42%; animation-delay: 1s; }
+		
+		/* 粒子浮动动画 */
+		@keyframes float {
+		    0% { transform: translate(0, 0) rotate(0deg); opacity: 0.2; }
+		    50% { transform: translate(50px, -70px) rotate(180deg); opacity: 0.6; }
+		    100% { transform: translate(0, 0) rotate(360deg); opacity: 0.2; }
+		}
+		
+		/* 白框上方独立图片，再次向上移动 */
+		.above-box-img {
+		    position: absolute;
+		    width: 65%;
+		    left: 17.5%;
+		    top: calc(50% - 340px);
+		    z-index: 10;
+		    max-height: 130px;
+		    object-fit: contain;
+		}
+		
+		/* 居中文字面板（白色半透明框） */
+		.center-text-wrap {
+		    position: absolute;
+		    width: 80%;
+		    left: 10%;
+		    top: 50%;
+		    transform: translateY(-50%);
+		    z-index: 10;
+		    background: rgba(255,255,255,0.88);
+		    padding: 30px 22px;
+		    border-radius: 14px;
+		    text-align: center;
+		}
+		
+		.main-title {
+		    font-size: 24px;
+		    color: #274a78;
+		    margin: 0 0 16px;
+		}
+		.text-desc p {
+		    font-size: 15px;
+		    line-height: 1.7;
+		    color: #222;
+		    margin: 10px 0;
+		    text-align: justify;
+		    text-indent: 2em;
+		}
+    </style>
+</head>
+<body>
+<div class="phone" id="mainWrap">
+    <div class="page-box">
+        <!-- 1首页 -->
+        <div class="page active" data-page="1">
+            <h2 class="title">数聚福州 智启未来</h2>
+            <p class="sub-title">数字福州发展峰会 专题交互展</p>
+            <img src="img/1.png" class="page-img" alt="福州轮廓">
+            <p class="tip">点击屏幕任意位置进入</p>
+        </div>
+
+        <!-- 2数字经济 左右分栏 -->
+        <div class="page" data-page="2">
+            <div class="img-wrap">
+                <img src="img/2.jpg" class="page-img" alt="芯片网络">
+                <div class="code-line line1"></div>
+                <div class="code-line line2"></div>
+                <div class="code-line line3"></div>
+            </div>
+            <div class="text-box">
+                <h2 class="title">数字经济核心</h2>
+                <p class="desc">数字福州以数字中国建设峰会为核心载体，聚焦数字产业、智慧城市、数字政务三大赛道。持续吸引互联网、人工智能、云计算企业落地，不断完善数字基础设施，打造全国数字经济发展标杆城市。峰会多年落地福州，持续输出政企合作、技术转化、产业孵化等丰硕成果。</p>
+            </div>
+            <p class="tip">上下滑动切换页面</p>
+        </div>
+
+        <!-- 第三幕 峰会现场 全部图片容器 -->
+        <div class="page" data-page="3">
+            <h2 class="title">峰会现场场景</h2>
+            <!-- 新增：大屏上方装饰图，和标题一同出现 -->
+            <img class="top-deco-img" src="img/top_deco.png" alt="顶部装饰图形">
+            <div class="scene-wrap">
+                <!-- 大屏在讲台上方 -->
+                <img class="screen-img" id="screenBtn" src="img/screen.png" alt="峰会大屏">
+                <img class="stage-img" src="img/stage.png" alt="会议讲台">
+                <!-- 两侧人群 -->
+                <div class="crowd-group">
+                    <img class="crowd-left-img" src="img/crowd_left.png" alt="左侧人群">
+                    <img class="crowd-right-img" src="img/crowd_right.png" alt="右侧人群">
+                </div>
+                <!-- 放大、上移后的对话气泡 -->
+                <div class="bubble-group">
+                    <img class="bubble-img" src="img/bubble1.png" alt="对话气泡">
+                    <img class="bubble-img" src="img/bubble2.png" alt="对话气泡">
+                    <img class="bubble-img" src="img/bubble3.png" alt="对话气泡">
+                </div>
+            </div>
+            <p class="tip">上下滑动切换页面</p>
+        </div>
+
+        <!-- 4数字政务 -->
+        <div class="page" data-page="4">
+            <h2 class="title">数字政务 便民服务</h2>
+            <!-- 单列图片容器 -->
+            <div class="img-col-box">
+                <img src="img/4.jpg" class="col-img" alt="政务服务">
+                <img src="img/4-1.jpg" class="col-img" alt="政务图2">
+                <img src="img/4-2.jpg" class="col-img" alt="政务图3">
+            </div>
+            <div class="click-area" id="scanBtn">线上政务介绍</div>
+            <p class="desc">一网通办、掌上政务，便民服务全覆盖</p>
+            <p class="tip">上下滑动切换页面</p>
+        </div>
+
+        <!-- 5四大数字产业 -->
+        <div class="page" data-page="5">
+            <h2 class="title">四大数字产业</h2>
+            <div class="icon-wrap">
+                <div class="hover-item" data-type="internet">
+                    <img src="img/icon-internet.png" alt="互联网">
+                </div>
+                <div class="hover-item" data-type="ai">
+                    <img src="img/icon-ai.png" alt="人工智能">
+                </div>
+                <div class="hover-item" data-type="shop">
+                    <img src="img/icon-shop.png" alt="电商">
+                </div>
+                <div class="hover-item" data-type="cloud">
+                    <img src="img/icon-cloud.png" alt="云计算">
+                </div>
+            </div>
+        
+            <div class="pop-box" id="industryPop">
+                <img class="pop-img" alt="产业配图">
+                <p class="pop-text"></p>
+                <span class="close-btn">关闭</span>
+            </div>
+        
+            <p class="desc">数字产业集群蓬勃发展，赋能城市经济升级</p>
+            <p class="tip">上下滑动切换页面</p>
+        </div>
+
+        <!-- 6智慧民生 -->
+        <div class="page" data-page="6">
+            <h2 class="title">智慧民生 乐享生活</h2>
+            <div class="center-box">
+                <div class="click-area" data-type="traffic">智慧交通</div>
+                <div class="click-area" data-type="community">智慧社区</div>
+                <div class="click-area" data-type="travel">智慧文旅</div>
+            </div>
+            <p class="tip">上下滑动切换页面</p>
+        </div>
+        
+        <!-- 全局弹窗放在所有page外面，body末尾 -->
+        <div class="pop-box" id="mask">
+            <img class="pop-img" alt="配图">
+            <p class="pop-text" id="popText"></p>
+            <span class="close-btn">关闭</span>
+        </div>
+
+        <!-- 7 数字福州总结收尾页 -->
+        <div class="page" data-page="7">
+            <!-- 底层：地标背景图 + 流动数字粒子 -->
+            <div class="bg-layer">
+                <!-- 福州三坊七巷、闽江线条手绘背景图 -->
+                <img class="bg-img" src="img/summary_bg.png" alt="福州地标线稿背景">
+                <!-- 环绕浮动数字粒子 -->
+                <div class="particle-box">
+                    <span class="dot">0</span>
+                    <span class="dot">1</span>
+                    <span class="dot">5G</span>
+                    <span class="dot">AI</span>
+                    <span class="dot">云</span>
+                    <span class="dot">数据</span>
+                    <span class="dot">互联</span>
+                    <span class="dot">数字</span>
+                </div>
+            </div>
+        
+            <!-- 白框上方独立配图，不在文字白框内 -->
+            <img class="above-box-img" src="img/summary_top.png" alt="顶部装饰图">
+        
+            <!-- 画面中间总结文本白框 -->
+            <div class="center-text-wrap">
+                <h2 class="main-title">数聚福州 · 智启未来</h2>
+                <div class="text-desc">
+                    <p><strong>发展成果</strong>：福州深耕数字经济建设，落地智慧交通、智慧社区、智慧文旅、掌上政务等数字化场景，搭建数字产业交流峰会，以数字技术全方位赋能民生服务与城市治理。</p>
+                    <p><strong>未来愿景</strong>：持续推动数字产业创新发展，深化数字与城市、文旅、民生融合，打造特色数字城市样板，构筑宜居、高效、现代化的智慧福州。</p>
+                </div>
+            </div>
+        
+            <p class="tip">上下滑动切换页面</p>
+        </div>
+
+        <!-- 8结尾 -->
+        <div class="page" data-page="8">
+            <h2 class="title">数智福州 未来可期</h2>
+            <img src="img/8.jpg" class="page-img" alt="结尾配图">
+            <p class="desc">作品：数字福州专题交互展</p>
+            <div class="click-area" id="backBtn">点击返回首页</div>
+        </div>
+    </div>
+
+    <div class="mask" id="mask">
+        <div class="popup" id="popText"></div>
+    </div>
+</div>
+
+<script>
+const pageList = document.querySelectorAll('.page');
+const mask = document.getElementById('mask');
+const popText = document.getElementById('popText');
+const popImg = mask.querySelector(".pop-img");
+const mainWrap = document.getElementById('mainWrap');
+let currentPage = 1;
+const totalPage = 8;
+
+// 你的文字介绍原样不动
+const popContent = {
+    screen: "峰会简介：数字福州产业峰会聚焦数字经济、政企合作、产业落地，汇聚行业专家，分享前沿技术，助力福州数字化转型。",
+    scan: "线上政务服务：足不出户办理政务业务，一网通办、掌上办事，便捷高效服务民生。",
+    traffic: "智慧交通：智能路网、公交调度、智慧停车，全方位优化市民出行体验。",
+    community: "智慧社区：智能门禁、物业联动、线上便民服务，打造宜居智慧生活圈。",
+    travel: "智慧文旅：景区数字化、线上导览，深度体验福州文旅资源。"
+};
+
+// 图片路径，screen留空不加载
+const popImgSrc = {
+    screen: "",
+    scan: "img/scan.jpg",
+    traffic: "img/traffic.jpg",
+    community: "img/community.jpg",
+    travel: "img/travel.jpg"
+};
+
+// 页面切换
+function switchPage(num){
+    if(num<1||num>totalPage)return;
+    pageList.forEach(p=>{
+        p.classList.remove('active');
+        p.style.animation='none';
+        void p.offsetWidth;
+        p.style.animation='';
+    });
+    document.querySelector(`.page[data-page="${num}"]`).classList.add('active');
+    currentPage=num;
+}
+document.querySelector('[data-page="1"]').addEventListener('click',()=>switchPage(2));
+
+// 通用点击区域（第六幕三个按钮走这里，正常显示配图）
+const allClickAreas = document.querySelectorAll(".click-area");
+allClickAreas.forEach(item=>{
+    item.addEventListener("click",(e)=>{
+        // 新增：判断当前页面是第七幕，直接终止弹窗逻辑
+        const parentPage = item.closest(".page");
+        if(parentPage && parentPage.dataset.page === "7"){
+            return;
+        }
+
+        const type = item.dataset.type;
+        popText.innerText = popContent[type] || "暂无相关介绍";
+        const imgUrl = popImgSrc[type];
+        if(imgUrl){
+            popImg.src = imgUrl;
+            popImg.style.display = "block";
+        }else{
+            popImg.style.display = "none";
+        }
+        mask.classList.add("show");
+    })
+})
+
+// 第三幕大屏单独点击，screen无图自动隐藏图片块
+const screenBtn = document.getElementById("screenBtn");
+screenBtn.addEventListener("click",()=>{
+    const type = "screen";
+    popText.innerText = popContent[type];
+    popImg.style.display = "none";
+    mask.classList.add("show");
+})
+
+// 关闭弹窗
+document.querySelector(".close-btn").addEventListener("click",()=>{
+    mask.classList.remove("show");
+})
+
+// 上下竖直滑动切换页面
+let startY = 0, moveY = 0;
+mainWrap.addEventListener('touchstart', e => {
+    startY = e.touches[0].clientY;
+}, {passive:true});
+mainWrap.addEventListener('touchmove', e => {
+    moveY = e.touches[0].clientY - startY;
+}, {passive:true});
+mainWrap.addEventListener('touchend', () => {
+    if(currentPage >= 2 && currentPage <= 7){
+        if(moveY < -60){
+            switchPage(currentPage + 1);
+        }
+        else if(moveY > 60){
+            switchPage(currentPage - 1);
+        }
+    }
+    startY = moveY = 0;
+});
+
+// 大屏点击弹窗
+document.getElementById('screenBtn').onclick=e=>{
+    e.stopPropagation();
+    popText.innerText=popContent.screen;
+    mask.style.display='block';
+};
+document.getElementById('scanBtn').onclick=e=>{
+    e.stopPropagation();
+    popText.innerText=popContent.scan;
+    mask.style.display='block';
+};
+document.querySelectorAll('[data-type]').forEach(item=>{
+    item.onclick=e=>{
+        e.stopPropagation();
+        popText.innerText=popContent[item.dataset.type];
+        mask.style.display='block';
+    }
+});
+mask.onclick=()=>mask.style.display='none';
+document.getElementById('backBtn').onclick=()=>switchPage(1);
+
+(function(){
+    // 完整配套数据，每个key都和data-type完全对应
+    const industryData = {
+        internet: {
+            img: "img/internet.jpg",
+            text: "互联网产业搭建城市数字网络底座，打通线上生活、办公、服务各类场景，为数字福州发展提供基础网络支撑。"
+        },
+        ai: {
+            img: "img/ai.jpg",
+            text: "人工智能落地城市安防、智慧交通、便民政务等领域，依靠智能算法降低管理成本，全方位提升城市治理效率。"
+        },
+        shop: {
+            img: "img/shop.jpg",
+            text: "数字电商打通本地特色产销链路，拓宽线上销售渠道，助力实体经济与线上经济融合，带动商户增收就业。"
+        },
+        cloud: {
+            img: "img/cloud.jpg",
+            text: "云计算提供低成本、高弹性算力与存储资源，降低中小企业数字化转型门槛，是各类数字应用运行的底层技术支撑。"
+        }
+    };
+
+    const popBox = document.getElementById("industryPop");
+    if (!popBox) return;
+
+    const popImg = popBox.querySelector(".pop-img");
+    const popText = popBox.querySelector(".pop-text");
+    const closeBtn = popBox.querySelector(".close-btn");
+    const iconItems = document.querySelectorAll(".page[data-page='5'] .hover-item");
+
+    iconItems.forEach(item => {
+        item.onclick = function(){
+            // 获取当前点击元素的data-type
+            const type = this.getAttribute("data-type");
+            // 兜底判断，找不到就赋值空内容，不会出现undefined
+            const data = industryData[type] || {img:"", text:"暂无介绍"};
+            popImg.src = data.img;
+            popText.innerText = data.text;
+            popBox.classList.add("show");
+        }
+    });
+
+    closeBtn.onclick = function(){
+        popBox.classList.remove("show");
+    }
+})();
+</script>
+</body>
+</html>
